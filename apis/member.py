@@ -1,3 +1,4 @@
+import jwt
 import json
 import hashlib
 from flask_restful import request
@@ -57,14 +58,16 @@ class LoginProcess(Resource):
 			user_email = args['user_email']
 			user_pw = encrypt(args['user_pw'])
 
-			sql = "SELECT user_seq FROM user WHERE user_email = %s AND user_pw = %s;"
+			sql = "SELECT user_seq, user_nm FROM user WHERE user_email = %s AND user_pw = %s;"
 			db.cursor.execute(sql, (user_email, user_pw))
 			result = db.cursor.fetchone()
 
 			if result == None:
 				return {"code":"err", "message":"Invalid Account"}	
 			else:
-				return {"code":"success", "data":"Token"}
+				encoded_jwt = jwt.encode(result, "secret", algorithm="HS256")
+
+				return {"code":"success", "data":{"token":encoded_jwt}}
 
 		except Exception as e:
 			return {"code":"err", "message":str(e)}
