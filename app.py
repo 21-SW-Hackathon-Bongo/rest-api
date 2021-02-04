@@ -5,7 +5,6 @@ from apis.company import GetCPProfile
 from apis.member import *
 from apis.search import Search, Category
 from apis.item import Work, Apply, Cancel
-from apis.deposit import Deposit
 
 app = Flask(__name__)
 
@@ -34,9 +33,10 @@ api.add_namespace(Cancel, '/work')		    # 일자리 신청 취소
 api.add_namespace(GetCPProfile, '/company')	# 회사 프로필 조회
 
 
-api.add_namespace(Deposit, '/deposit')		# 예치금
+api.add_namespace(Deposit, '/deposit')	# 회사 프로필 조회
 """
 api.add_namespace(Business, '/business')	# 고용주 회원 관련
+api.add_namespace(Job, '/job')				# 업무 관련
 api.add_namespace(Calculate, '/calculate')	# 정산 관련
 api.add_namespace(Deposit, '/deposit')		# 예치금 관련
 """
