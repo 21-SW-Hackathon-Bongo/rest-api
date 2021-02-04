@@ -160,8 +160,7 @@ class JoinProcess(Resource):
 
 # 프로필 등록 API
 SetProfile = Namespace('set profile', description='프로필 설정')
-join_model = SetProfile.model('profile data', {
-		'token': fields.String,
+join_model = SetProfile.model('set profile data', {
 		'user_banknm': fields.String,
 		'user_account': fields.String,
 		'user_intro': fields.String
@@ -170,6 +169,7 @@ join_model = SetProfile.model('profile data', {
 @SetProfile.route('/profile')
 @SetProfile.response(200, 'Found')
 @SetProfile.response(500, 'Internal Error')
+@SetProfile.doc(params={'Authorization': {'in': 'header', 'description': 'An authorization token'}})
 class ProfileProcess(Resource):
 	@SetProfile.expect(join_model)
 	def post(self):
@@ -177,15 +177,18 @@ class ProfileProcess(Resource):
 			db = dbHelper()
 
 			parser = reqparse.RequestParser()
-			parser.add_argument('token', type=str)
 			parser.add_argument('user_banknm', type=str)
 			parser.add_argument('user_account', type=str)
 			parser.add_argument('user_intro', type=str)
 			args = parser.parse_args()
 
+			header = request.headers.get('Authorization')
+			
+			if header is None:
+				return {"code": "err", "message": "Not Allow Authorization"}
 			try:
-				data = jwt.decode(args['token'], "secret", algorithms=["HS256"])
-			except:
+				data = jwt.decode(header, "secret", algorithms=["HS256"])
+			except Exception as e:
 				return {"code":"err", "message":"Token Expired"}
 
 			user_seq = data['user_seq']
@@ -207,13 +210,13 @@ class ProfileProcess(Resource):
 # 관심분야 등록 API
 SetInterest = Namespace('set interest', description='관심분야 등록')
 interest_model = SetInterest.model('profile data', {
-		'token': fields.String,
 		'interests': fields.List(fields.Integer)
 })
 
 @SetInterest.route('/interest')
 @SetInterest.response(200, 'Found')
 @SetInterest.response(500, 'Internal Error')
+@SetInterest.doc(params={'Authorization': {'in': 'header', 'description': 'An authorization token'}})
 class InterestProcess(Resource):
 	@SetInterest.expect(interest_model)
 	def post(self):
@@ -221,13 +224,16 @@ class InterestProcess(Resource):
 			db = dbHelper()
 
 			parser = reqparse.RequestParser()
-			parser.add_argument('token', type=str)
 			parser.add_argument('interests', type=int, action='append')
 			args = parser.parse_args()
 
+			header = request.headers.get('Authorization')
+			
+			if header is None:
+				return {"code": "err", "message": "Not Allow Authorization"}
 			try:
-				data = jwt.decode(args['token'], "secret", algorithms=["HS256"])
-			except:
+				data = jwt.decode(header, "secret", algorithms=["HS256"])
+			except Exception as e:
 				return {"code":"err", "message":"Token Expired"}
 
 			user_seq = data['user_seq']
@@ -280,26 +286,25 @@ class Check(Resource):
 
 # 프로필 조회 API
 GetProfile = Namespace('get profile', description='프로필 조회')
-default_model = GetProfile.model('profile data', {
-		'token': fields.String,
-})
 
 @GetProfile.route('/<user_seq>')
 @GetProfile.response(200, 'Found')
 @GetProfile.response(500, 'Internal Error')
+@GetProfile.doc(params={'Authorization': {'in': 'header', 'description': 'An authorization token'}})
 class GetProfileProcess(Resource):
-	@GetProfile.expect(default_model)
-	def post(self, user_seq):
+	def get(self, user_seq):
 		try:
 			db = dbHelper()
 
-			parser = reqparse.RequestParser()
-			parser.add_argument('token', type=str)
-			args = parser.parse_args()
+			# Authorization 헤더로 담음
+			header = request.headers.get('Authorization')
+			
+			if header is None:
+				return {"code": "err", "message": "Not Allow Authorization"}
 
 			try:
-				data = jwt.decode(args['token'], "secret", algorithms=["HS256"])
-			except:
+				data = jwt.decode(header, "secret", algorithms=["HS256"])
+			except Exception as e:
 				return {"code":"err", "message":"Token Expired"}
 
 			sql = "SELECT * FROM user WHERE user_seq = %s;"
