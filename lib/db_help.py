@@ -25,14 +25,3 @@ class dbHelper:
 		result = self.cursor.fetchall()
 
 		return result
-
-	# 아이디 중복체크 함수
-	def dupCheck(self, user_id):
-		sql = "SELECT id FROM members WHERE user_id = %s;"
-		self.cursor.execute(sql, (user_id))
-		result = self.cursor.fetchone()
-
-		if result == None:
-			return False
-
-		return True
