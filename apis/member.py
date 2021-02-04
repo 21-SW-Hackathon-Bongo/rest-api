@@ -33,6 +33,15 @@ def encrypt(user_pw):
 
 	return encText
 
+# 사용자 프로필 등록
+def setProfile(key, value, user_seq):
+	db = dbHelper()
+	sql = "UPDATE user SET "+str(key)+" = %s, user_status = '1' WHERE user_seq = %s;"
+	db.cursor.execute(sql, (value, user_seq))
+	db.conn.commit()
+
+	return True
+
 # 로그인 API
 # 로그인 파라미터 정보
 Login = Namespace('login', description='로그인')
@@ -75,8 +84,8 @@ class LoginProcess(Resource):
 		return {"code":"success", "data":"token"}
 
 # 회원가입 API
-Member = Namespace('join', description='회원가입')
-join_model = Member.model('join data', {
+Join = Namespace('join', description='회원가입')
+join_model = Join.model('join data', {
 		'user_email': fields.String,
 		'user_pw': fields.String,
 		'user_type': fields.String,
@@ -84,11 +93,11 @@ join_model = Member.model('join data', {
 		'user_gender': fields.String
 })
 
-@Member.route('/join')
-@Member.response(200, 'Found')
-@Member.response(500, 'Internal Error')
-class Join(Resource):
-	@Member.expect(join_model)
+@Join.route('/join')
+@Join.response(200, 'Found')
+@Join.response(500, 'Internal Error')
+class JoinProcess(Resource):
+	@Join.expect(join_model)
 	def post(self):
 		try:
 			db = dbHelper()
@@ -119,12 +128,60 @@ class Join(Resource):
 
 		return {"code":"success", "data":{"user_seq":user_seq}}
 
-# 아이디 중복확인 API
-check_model = Member.model('check_model', {
-	'user_id': fields.String
+# 회원가입 API
+SetProfile = Namespace('set profile', description='프로필 설정')
+join_model = SetProfile.model('profile data', {
+		'token': fields.String,
+		'user_banknm': fields.String,
+		'user_account': fields.String,
+		'user_intro': fields.String,
+		'user_img': fields.String
 })
 
+@SetProfile.route('/profile')
+@SetProfile.response(200, 'Found')
+@SetProfile.response(500, 'Internal Error')
+class ProfileProcess(Resource):
+	@SetProfile.expect(join_model)
+	def post(self):
+		try:
+			db = dbHelper()
+
+			parser = reqparse.RequestParser()
+			parser.add_argument('token', type=str)
+			parser.add_argument('user_banknm', type=str)
+			parser.add_argument('user_account', type=str)
+			parser.add_argument('user_intro', type=str)
+			parser.add_argument('user_img', type=str)
+			args = parser.parse_args()
+
+			try:
+				data = jwt.decode(args['token'], "secret", algorithms=["HS256"])
+			except:
+				return {"code":"err", "message":"Token Expired"}
+
+			user_seq = data['user_seq']
+
+			# 프로필 정보 등록
+			updatedProfile = []
+
+			for key in args:
+				if args[key] != None and key != 'token':
+					setProfile(key, args[key], user_seq)
+					updatedProfile.append(key)
+
+		except Exception as e:
+			return {"code":"err", "message":str(e)}
+
+		return {"code":"success", "data":{"updated":updatedProfile}}
+
+
 IDCheck = Namespace('ID Check', description='아이디 중복검사')
+
+# 아이디 중복확인 API
+check_model = IDCheck.model('check_model', {
+	'user_id': fields.String
+})
 
 @IDCheck.route('/check')
 class Check(Resource):
