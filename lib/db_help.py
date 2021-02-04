@@ -25,3 +25,6 @@ class dbHelper:
 		result = self.cursor.fetchall()
 
 		return result
+
+	def __del__(self):
+		self.conn.close()
