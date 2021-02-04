@@ -2,9 +2,12 @@ from flask import Flask, Blueprint
 from flask_restplus import Resource, Api
 # API Import
 from apis.company import GetCPProfile
+from apis.deposit import Deposit
+from apis.employee import SetEmployeeEnd, PutEmployeeEnd
 from apis.member import *
 from apis.search import Search, Category
 from apis.item import Work, Apply, Cancel
+from apis.volunteer import GetVolunteer, SetVolunteer
 
 app = Flask(__name__)
 
@@ -32,6 +35,11 @@ api.add_namespace(Cancel, '/work')		    # 일자리 신청 취소
 
 api.add_namespace(GetCPProfile, '/company')	# 회사 프로필 조회
 
+api.add_namespace(GetVolunteer, '/work')	# 지원자 조회
+api.add_namespace(SetVolunteer, '/work')	# 지원자 승인
+
+api.add_namespace(SetEmployeeEnd, '/work')	# 평점 등록
+api.add_namespace(PutEmployeeEnd, '/work')	# 평점 수정
 
 api.add_namespace(Deposit, '/deposit')	# 회사 프로필 조회
 """
