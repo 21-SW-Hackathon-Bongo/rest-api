@@ -277,3 +277,42 @@ class Check(Resource):
 			return {"code":"err", "message":str(e)}
 
 		return {"code":"success", "data":"token"}
+
+# 프로필 조회 API
+GetProfile = Namespace('get profile', description='프로필 조회')
+default_model = GetProfile.model('profile data', {
+		'token': fields.String,
+})
+
+@GetProfile.route('/<user_seq>')
+@GetProfile.response(200, 'Found')
+@GetProfile.response(500, 'Internal Error')
+class GetProfileProcess(Resource):
+	@GetProfile.expect(default_model)
+	def post(self, user_seq):
+		try:
+			db = dbHelper()
+
+			parser = reqparse.RequestParser()
+			parser.add_argument('token', type=str)
+			args = parser.parse_args()
+
+			try:
+				data = jwt.decode(args['token'], "secret", algorithms=["HS256"])
+			except:
+				return {"code":"err", "message":"Token Expired"}
+
+			sql = "SELECT * FROM user WHERE user_seq = %s;"
+
+			db.cursor.execute(sql, (user_seq))
+			result = db.cursor.fetchone()
+
+			if result == None:
+				return {"code":"err", "message":"Invalid User"}
+
+			profile_data = {"user_nm":result['user_nm'], "user_email":result['user_email'], "user_birth":str(result['user_birth'])}
+
+		except Exception as e:
+			return {"code":"err", "message":str(e)}
+
+		return {"code":"success", "data":profile_data}
