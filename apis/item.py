@@ -84,7 +84,7 @@ Cancel = Namespace('cancel', description='일자리 신청 취소')
 
 
 # 아이템 취소 API
-@Cancel.route('/cancel')
+@Cancel.route('/cancel/<work_seq>')
 @Cancel.response(200, 'OK')
 @Cancel.response(500, 'Internal Error')
 class Cancel_Work(Resource):
