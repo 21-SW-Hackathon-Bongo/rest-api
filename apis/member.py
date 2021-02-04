@@ -42,6 +42,24 @@ def setProfile(key, value, user_seq):
 
 	return True
 
+# 관심분야 등록
+def resetInterest(user_seq):
+	db = dbHelper()
+	sql = "DELETE FROM user_interest WHERE user_seq = %s;"
+	db.cursor.execute(sql, (user_seq))
+	db.conn.commit()
+
+	return True	
+
+# 관심분야 등록
+def setInterest(user_seq, work_type_seq):
+	db = dbHelper()
+	sql = "INSERT INTO user_interest (user_seq, work_type_seq) VALUES (%s, %s);"
+	db.cursor.execute(sql, (user_seq, work_type_seq))
+	db.conn.commit()
+
+	return True	
+
 # 로그인 API
 # 로그인 파라미터 정보
 Login = Namespace('login', description='로그인')
@@ -128,14 +146,13 @@ class JoinProcess(Resource):
 
 		return {"code":"success", "data":{"user_seq":user_seq}}
 
-# 회원가입 API
+# 프로필 등록 API
 SetProfile = Namespace('set profile', description='프로필 설정')
 join_model = SetProfile.model('profile data', {
 		'token': fields.String,
 		'user_banknm': fields.String,
 		'user_account': fields.String,
-		'user_intro': fields.String,
-		'user_img': fields.String
+		'user_intro': fields.String
 })
 
 @SetProfile.route('/profile')
@@ -152,7 +169,6 @@ class ProfileProcess(Resource):
 			parser.add_argument('user_banknm', type=str)
 			parser.add_argument('user_account', type=str)
 			parser.add_argument('user_intro', type=str)
-			parser.add_argument('user_img', type=str)
 			args = parser.parse_args()
 
 			try:
@@ -174,6 +190,49 @@ class ProfileProcess(Resource):
 			return {"code":"err", "message":str(e)}
 
 		return {"code":"success", "data":{"updated":updatedProfile}}
+
+
+# 관심분야 등록 API
+SetInterest = Namespace('set interest', description='관심분야 등록')
+interest_model = SetInterest.model('profile data', {
+		'token': fields.String,
+		'interests': fields.List(fields.Integer)
+})
+
+@SetInterest.route('/interest')
+@SetInterest.response(200, 'Found')
+@SetInterest.response(500, 'Internal Error')
+class InterestProcess(Resource):
+	@SetInterest.expect(interest_model)
+	def post(self):
+		try:
+			db = dbHelper()
+
+			parser = reqparse.RequestParser()
+			parser.add_argument('token', type=str)
+			parser.add_argument('interests', type=int, action='append')
+			args = parser.parse_args()
+
+			try:
+				data = jwt.decode(args['token'], "secret", algorithms=["HS256"])
+			except:
+				return {"code":"err", "message":"Token Expired"}
+
+			user_seq = data['user_seq']
+
+			interests = args['interests']
+			
+			# 관심분야 초기화
+			resetInterest(user_seq)
+
+			# 관심분야 추가
+			for work_type_seq in interests:
+				setInterest(user_seq, work_type_seq)
+
+		except Exception as e:
+			return {"code":"err", "message":str(e)}
+
+		return {"code":"success", "data":{"updated":interests}}
 
 
 IDCheck = Namespace('ID Check', description='아이디 중복검사')
