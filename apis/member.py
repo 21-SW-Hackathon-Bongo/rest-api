@@ -8,7 +8,7 @@ sys.path.append("..")
 
 from lib.db_help import dbHelper
 
-Member = Namespace('member', description='일반회원')
+Member = Namespace('join', description='일반회원 가입')
 
 # 결과값 정보
 res_model = Member.model('response', {
@@ -82,14 +82,16 @@ class Check(Resource):
 
 			__userID = args['user_id']
 
-			result = db.dupCheck(__userID)
+			sql = "SELECT id FROM members WHERE user_id = %s;"
+			db.cursor.execute(sql, (__userID))
+			result = db.cursor.fetchone()
 
-			if result:
-				# 중복 존재
-				return {"code":"success", "message":"n"}
-			else:
+			if result == None:
 				# 중복 존재 X
-				return {"code":"success", "message":"y"}
+				return {"code":"success", "data":{"isDuplicate":"n"}, "message":"n"}
+			else:
+				# 중복 존재
+				return {"code":"success", "data":{"isDuplicate":"y"}, "message":"y"}
 		except Exception as e:
 			return {"code":"err", "message":str(e)}
 
