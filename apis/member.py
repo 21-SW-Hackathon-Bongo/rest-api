@@ -19,16 +19,17 @@ res_model = Member.model('response', {
 
 # 로그인 API
 # 로그인 파라미터 정보
-login_model = Member.model('login data', {
+Login = Namespace('login', description='로그인')
+login_model = Login.model('login data', {
 		'user_id': fields.String,
 		'user_pw': fields.String
 })
 
-@Member.route('/login')
-@Member.response(200, 'OK', model=res_model)
-@Member.response(500, 'Internal Error')
-class Login(Resource):
-	@Member.expect(login_model)
+@Login.route('/login')
+@Login.response(200, 'OK')
+@Login.response(500, 'Internal Error')
+class LoginProcess(Resource):
+	@Login.expect(login_model)
 	def post(self):
 		try:
 			db = dbHelper()
@@ -47,6 +48,7 @@ class Login(Resource):
 		return {"code":"success", "data":"token"}
 
 # 회원가입 API
+Member = Namespace('member', description='일반회원')
 join_model = Member.model('join data', {
 		'user_id': fields.String,
 		'user_pw': fields.String
@@ -59,3 +61,36 @@ class Join(Resource):
 	@Member.expect(join_model)
 	def post(self):
 		return {"text":"join"}
+
+# 아이디 중복확인 API
+check_model = Member.model('check_model', {
+	'user_id': fields.String
+})
+
+IDCheck = Namespace('ID Check', description='아이디 중복검사')
+
+@IDCheck.route('/check')
+class Check(Resource):
+	@IDCheck.expect(check_model)
+	def post(self):
+		try:
+			db = dbHelper()
+
+			parser = reqparse.RequestParser()
+			parser.add_argument('user_id', type=str)
+			args = parser.parse_args()
+
+			__userID = args['user_id']
+
+			result = db.dupCheck(__userID)
+
+			if result:
+				# 중복 존재
+				return {"code":"success", "message":"n"}
+			else:
+				# 중복 존재 X
+				return {"code":"success", "message":"y"}
+		except Exception as e:
+			return {"code":"err", "message":str(e)}
+
+		return {"code":"success", "data":"token"}
