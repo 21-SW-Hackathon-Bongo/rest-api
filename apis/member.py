@@ -89,7 +89,7 @@ class LoginProcess(Resource):
 			user_email = args['user_email']
 			user_pw = encrypt(args['user_pw'])
 
-			sql = "SELECT user_seq, user_nm FROM user WHERE user_email = %s AND user_pw = %s;"
+			sql = "SELECT user_seq, user_nm, user_type FROM user WHERE user_email = %s AND user_pw = %s;"
 			db.cursor.execute(sql, (user_email, user_pw))
 			result = db.cursor.fetchone()
 
