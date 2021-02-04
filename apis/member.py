@@ -12,6 +12,10 @@ from lib.db_help import dbHelper
 
 # 이메일 검증
 def validEmail(user_email):
+	# @ 검증
+	if "@" not in user_email:
+		return False
+
 	db = dbHelper()
 	sql = "SELECT user_seq FROM user WHERE user_email = %s;"
 	db.cursor.execute(sql, (user_email))
@@ -108,7 +112,8 @@ join_model = Join.model('join data', {
 		'user_pw': fields.String,
 		'user_type': fields.String,
 		'user_birth': fields.String,
-		'user_gender': fields.String
+		'user_gender': fields.String,
+		'user_nm': fields.String
 })
 
 @Join.route('/join')
@@ -126,6 +131,7 @@ class JoinProcess(Resource):
 			parser.add_argument('user_type', type=str)
 			parser.add_argument('user_birth', type=str)
 			parser.add_argument('user_gender', type=str)
+			parser.add_argument('user_nm', type=str)
 			args = parser.parse_args()
 
 			user_pw = encrypt(args['user_pw'])
@@ -134,9 +140,13 @@ class JoinProcess(Resource):
 			if not validEmail(args['user_email']):
 				return {"code":"err", "message":"Invalid Email"}
 
+			# 파라미터 검증
+			for key in args:
+				if args[key] == None:
+					return {"code":"err", "message":"Invalid Parameter "+str(key)}
 
-			sql = "INSERT INTO user (user_email, user_pw, user_birth, user_gender) VALUES (%s, %s, %s, %s);"
-			db.cursor.execute(sql, (args['user_email'], user_pw, args['user_birth'], args['user_gender']))
+			sql = "INSERT INTO user (user_email, user_pw, user_birth, user_gender, user_nm) VALUES (%s, %s, %s, %s, %s);"
+			db.cursor.execute(sql, (args['user_email'], user_pw, args['user_birth'], args['user_gender'], args['user_nm']))
 			db.conn.commit()
 
 			user_seq = db.cursor.lastrowid
@@ -144,7 +154,9 @@ class JoinProcess(Resource):
 		except Exception as e:
 			return {"code":"err", "message":str(e)}
 
-		return {"code":"success", "data":{"user_seq":user_seq}}
+		encoded_jwt = jwt.encode({"user_seq":user_seq}, "secret", algorithm="HS256")
+
+		return {"code":"success", "data":{"token":encoded_jwt}}
 
 # 프로필 등록 API
 SetProfile = Namespace('set profile', description='프로필 설정')
