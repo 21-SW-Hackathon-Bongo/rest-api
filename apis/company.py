@@ -22,6 +22,7 @@ default_model = GetCPProfile.model('data', {
 @GetCPProfile.route('/<company_seq>')
 @GetCPProfile.response(200, 'OK')
 @GetCPProfile.response(500, 'Internal Error')
+@GetCPProfile.doc(params={'Authorization': {'in': 'header', 'description': 'An authorization token'}})
 class Get_Profile(Resource):
     # @Search.expect(default_model)
     def get(self, company_seq):
