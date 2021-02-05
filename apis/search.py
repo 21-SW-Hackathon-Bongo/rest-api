@@ -9,7 +9,7 @@ sys.path.append("..")
 from lib.db_help import dbHelper
 
 # 검색 파라미터 정보
-Search = Namespace('search', description='일자리 이름 검색')
+Search = Namespace('search', description='구직 검색(이름)')
 
 
 # 현재 Like문 버그?
@@ -35,7 +35,7 @@ class Search_nm(Resource):
 
 
 # 아이템 카테고리 파라미터 정보
-Category = Namespace('category', description='일자리 카테고리 검색')
+Category = Namespace('category', description='구직 검색(카테고리)')
 
 
 # 아이템 카테고리 검색 API

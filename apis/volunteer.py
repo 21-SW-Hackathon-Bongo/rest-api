@@ -9,7 +9,7 @@ sys.path.append("..")
 
 from lib.db_help import dbHelper
 
-GetVolunteer = Namespace('get volunteer', description='일자리 지원자 목록 조회')
+GetVolunteer = Namespace('get volunteer', description='구직 지원자 목록 조회')
 
 # 토큰
 default_model = GetVolunteer.model('data', {
@@ -50,7 +50,7 @@ class Get_Volunteer(Resource):
         return {"code": "success", "data": result}
 
 
-SetVolunteer = Namespace('set volunteer', description='일자리 지원자 승인')
+SetVolunteer = Namespace('set volunteer', description='구직 지원자 승인 처리')
 
 # 토큰
 setVolunteer_model = SetVolunteer.model('apply volunteer data', {
@@ -83,9 +83,20 @@ class Set_Volunteer(Resource):
             parser.add_argument('token', type=str)
             args = parser.parse_args()
 
-            sql = "UPDATE volunteer SET employee_yn = %s where volunteer_seq = %s;"
+            sql = "UPDATE volunteer SET employee_yn = %s WHERE volunteer_seq = %s;"
 
             db.cursor.execute(sql, ('Y', args['volunteer_seq']))
+            db.conn.commit()
+
+            sql = "SELECT work_seq FROM volunteer WHERE volunteer_seq = %s;"
+
+            db.cursor.execute(sql, args['volunteer_seq'])
+            result = db.cursor.fetchone()
+
+            data['work_seq'] = str(result['work_seq'])
+
+            sql = "UPDATE work SET work_recruit = work_recruit - 1 WHERE work_seq = %s"
+            db.cursor.execute(sql, data['work_seq'])
             db.conn.commit()
 
         except Exception as e:

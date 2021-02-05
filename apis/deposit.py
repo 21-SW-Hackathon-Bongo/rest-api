@@ -11,7 +11,7 @@ sys.path.append("..")
 from lib.db_help import dbHelper
 
 # 예치금 조회 API
-Deposit = Namespace('Deposit', description='예치금')
+Deposit = Namespace('Deposit', description='예치금 조회 및 충전')
 
 charge_model = Deposit.model('deposit charge', {
 		'amount': fields.Integer

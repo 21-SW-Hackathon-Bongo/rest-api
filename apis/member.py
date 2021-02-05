@@ -6,9 +6,11 @@ from flask_restplus import Namespace, fields, Resource, reqparse
 
 import os
 import sys
+
 sys.path.append("..")
 
 from lib.db_help import dbHelper
+
 
 # 이메일 검증
 def validEmail(user_email):
@@ -28,6 +30,7 @@ def validEmail(user_email):
     # 중복 존재
     return False
 
+
 # 패스워드 암호화
 def encrypt(user_pw):
     user_pw = user_pw.encode('utf-8')
@@ -36,6 +39,7 @@ def encrypt(user_pw):
     encText = enc.hexdigest()
 
     return encText
+
 
 # 사용자 프로필 등록
 def setProfile(key, value, user_seq):
@@ -46,6 +50,7 @@ def setProfile(key, value, user_seq):
 
     return True
 
+
 # 관심분야 등록
 def resetInterest(user_seq):
     db = dbHelper()
@@ -54,6 +59,7 @@ def resetInterest(user_seq):
     db.conn.commit()
 
     return True
+
 
 # 관심분야 등록
 def setInterest(user_seq, work_type_seq):
@@ -64,6 +70,22 @@ def setInterest(user_seq, work_type_seq):
 
     return True
 
+
+# 회사이름 중복 검증
+def checkCompanynm(company_nm):
+    db = dbHelper()
+    sql = "SELECT company_nm FROM company WHERE company_nm = %s";
+    db.cursor.execute(sql, company_nm)
+    result = db.cursor.fetchone()
+
+    if result == None:
+        # 중복 없음
+        return True
+
+    # 중복 존재
+    return False
+
+
 # 로그인 API
 # 로그인 파라미터 정보
 Login = Namespace('login', description='로그인')
@@ -71,6 +93,7 @@ login_model = Login.model('login data', {
     'user_email': fields.String,
     'user_pw': fields.String
 })
+
 
 @Login.route('/login')
 @Login.response(200, 'OK')
@@ -89,7 +112,7 @@ class LoginProcess(Resource):
             user_email = args['user_email']
             user_pw = encrypt(args['user_pw'])
 
-            sql = "SELECT user_seq, user_nm, user_type FROM user WHERE user_email = %s AND user_pw = %s;"
+            sql = "SELECT user_seq, user_nm FROM user WHERE user_email = %s AND user_pw = %s;"
             db.cursor.execute(sql, (user_email, user_pw))
             result = db.cursor.fetchone()
 
@@ -105,6 +128,7 @@ class LoginProcess(Resource):
 
         return {"code": "success", "data": "token"}
 
+
 # 회원가입 API
 Join = Namespace('join', description='회원가입')
 join_model = Join.model('join data', {
@@ -115,6 +139,7 @@ join_model = Join.model('join data', {
     'user_gender': fields.String,
     'user_nm': fields.String
 })
+
 
 @Join.route('/join')
 @Join.response(200, 'Found')
@@ -146,7 +171,8 @@ class JoinProcess(Resource):
                     return {"code": "err", "message": "Invalid Parameter " + str(key)}
 
             sql = "INSERT INTO user (user_email, user_pw, user_birth, user_gender, user_nm) VALUES (%s, %s, %s, %s, %s);"
-            db.cursor.execute(sql, (args['user_email'], user_pw, args['user_birth'], args['user_gender'], args['user_nm']))
+            db.cursor.execute(sql,
+                              (args['user_email'], user_pw, args['user_birth'], args['user_gender'], args['user_nm']))
             db.conn.commit()
 
             user_seq = db.cursor.lastrowid
@@ -156,7 +182,7 @@ class JoinProcess(Resource):
 
         encoded_jwt = jwt.encode({"user_seq": user_seq}, "secret", algorithm="HS256")
 
-        return {"code": "success", "data": {"token": encoded_jwt}}
+        return {"code": "success", "data": "token"}
 
 
 # 프로필 등록 API
@@ -322,9 +348,41 @@ class GetProfileProcess(Resource):
                 return {"code": "err", "message": "Invalid User"}
 
             profile_data = {"user_nm": result['user_nm'], "user_email": result['user_email'],
-                            "user_birth": str(result['user_birth']), "user_score": result['user_score']}
+                            "user_birth": str(result['user_birth'])}
 
         except Exception as e:
             return {"code": "err", "message": str(e)}
 
         return {"code": "success", "data": profile_data}
+
+
+# 프로필 조회 API
+CPCheck = Namespace('NM company_check', description='회사 중복검사')
+
+# 아이디 중복확인 API
+cp_check_model = CPCheck.model('company check_model', {
+    'company_nm': fields.String
+})
+
+
+@CPCheck.route('/company/check')
+class Company_check(Resource):
+    @CPCheck.expect(cp_check_model)
+    def post(self):
+        try:
+            parser = reqparse.RequestParser()
+            parser.add_argument('company_nm', type=str)
+            args = parser.parse_args()
+
+            companyNM = args['company_nm']
+
+            if checkCompanynm(companyNM):
+                # 중복 존재 X
+                return {"code": "success", "data": {"isDuplicate": "n"}, "message": "n"}
+            else:
+                # 중복 존재
+                return {"code": "success", "data": {"isDuplicate": "y"}, "message": "y"}
+        except Exception as e:
+            return {"code": "err", "message": str(e)}
+
+        return {"code": "success"}

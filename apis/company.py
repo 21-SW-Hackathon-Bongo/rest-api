@@ -12,7 +12,7 @@ from lib.db_help import dbHelper
 
 
 # 회사 프로필 파라미터 정보
-GetCPProfile = Namespace('get cp_profile', description='회사 프로필 조회')
+GetCPProfile = Namespace('get cp_profile', description='프로필 조회(회사)')
 default_model = GetCPProfile.model('data', {
     'token': fields.String,
 })

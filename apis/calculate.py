@@ -13,7 +13,7 @@ sys.path.append("..")
 from lib.db_help import dbHelper
 
 # 검색 파라미터 정보
-Calculate = Namespace('calculate', description='정산')
+Calculate = Namespace('calculate', description='일일 정산')
 calculate_model = Calculate.model('calculate data', {
     'user_seq': fields.Integer,
 })

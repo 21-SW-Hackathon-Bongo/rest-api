@@ -16,7 +16,7 @@ from lib.db_help import dbHelper
 
 
 # 아이템 파라미터 정보
-Work = Namespace('work', description='일자리 등록 및 단일 검색')
+Work = Namespace('work', description='구직 신규 등록 / 구직 검색(단일)')
 
 
 # 아이템 단일 검색 API
@@ -47,7 +47,7 @@ class Single_Work(Resource):
 
 
 # 등록 파라미터 정보
-Apply = Namespace('apply', description='일차리 신청')
+Apply = Namespace('apply', description='구직 신규 신청')
 apply_work_model = Apply.model('apply work data', {
     'user_seq': fields.Integer,
     'work_seq': fields.Integer,
@@ -84,19 +84,19 @@ class Apply_Work(Resource):
             parser.add_argument('volunteer_content', type=str)
             args = parser.parse_args()
 
-            # sql = "SELECT * FROM volunteer where user_seq = %s AND work_seq = %s AND volunteer_yn = %s"
-            # db.cursor.execute(sql, args['user_seq'], args['work_seq'], 'Y')
-            # result = db.cursor.fetchall()
-            #
-            # if result is not None:
-            #     return {"code": "err", "message": "Already have an apply"}
+            sql = "SELECT * FROM volunteer where user_seq = %s AND work_seq = %s AND volunteer_yn = %s"
+            db.cursor.execute(sql, (args['user_seq'], args['work_seq'], 'Y'))
+            result = db.cursor.fetchall()
+
+            if result is None:
+                return {"code": "err", "message": "Already have an apply"}
 
             sql = "INSERT into volunteer(user_seq, work_seq, volunteer_content, volunteer_yn) VALUES (%s, %s, %s, %s)"
             db.cursor.execute(sql, (args['user_seq'], args['work_seq'], args['volunteer_content'], 'Y'))
 
             # sql = "UPDATE work SET work_recruit = work_recruit - 1 WHERE work_seq = %s"
-            # db.consuor.execute(sql, args['work_seq'])
-            db.conn.commit()
+            # db.cursor.execute(sql, args['work_seq'])
+            # db.conn.commit()
 
         except Exception as e:
             return {"code": "err", "message": str(e)}
@@ -105,7 +105,7 @@ class Apply_Work(Resource):
 
 
 # 취소 파라미터 정보
-Cancel = Namespace('cancel', description='일자리 신청 취소')
+Cancel = Namespace('cancel', description='구직 신청 취소')
 
 cancle_work_model = Apply.model('cancle work data', {
     'user_seq': fields.Integer,
@@ -140,9 +140,10 @@ class Cancel_Work(Resource):
 
             sql = "UPDATE volunteer SET volunteer_yn = %s WHERE work_seq = %s AND user_seq = %s AND volunteer_yn = 'Y'"
             db.cursor.execute(sql, ('N', work_seq, args['user_seq']))
+
             # sql = "UPDATE work SET work_recruit = work_recruit + 1 WHERE work_seq = %s"
-            # db.consuor.execute(sql, args['work_seq'])
-            db.conn.commit()
+            # db.cursor.execute(sql, work_seq)
+            # db.conn.commit()
 
         except Exception as e:
             return {"code": "err", "message": str(e)}
@@ -157,8 +158,8 @@ post_work_model = Apply.model('post work data', {
     'work_type_seq': fields.Integer,
     'company_seq': fields.Integer,
     'work_title': fields.String,
-    'work_startAt': fields.Integer,
-    'work_endAt': fields.Integer,
+    'work_startAt': fields.String,
+    'work_endAt': fields.String,
     'work_recruit': fields.Integer,
     'work_pay': fields.Integer,
     'work_intro': fields.String,
@@ -192,8 +193,8 @@ class Apply_Work(Resource):
             parser.add_argument('work_type_seq', type=int)
             parser.add_argument('company_seq', type=int)
             parser.add_argument('work_title', type=str)
-            parser.add_argument('work_startAt', type=int)
-            parser.add_argument('work_endAt', type=int)
+            parser.add_argument('work_startAt', type=str)
+            parser.add_argument('work_endAt', type=str)
             parser.add_argument('work_recruit', type=int)
             parser.add_argument('work_pay', type=int)
             parser.add_argument('work_intro', type=str)

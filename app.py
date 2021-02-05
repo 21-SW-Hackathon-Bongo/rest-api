@@ -6,7 +6,7 @@ from apis.calculate import Calculate
 from apis.company import GetCPProfile
 from apis.deposit import Deposit
 from apis.employee import SetEmployeeEnd, PutEmployeeEnd
-from apis.member import *
+from apis.member import CPCheck, SetInterest, SetProfile, GetProfile, IDCheck, Join, Login
 from apis.search import Search, Category
 from apis.item import Work, Apply, Cancel
 from apis.volunteer import GetVolunteer, SetVolunteer
@@ -21,6 +21,7 @@ app.register_blueprint(blueprint)
 api.add_namespace(Login, '/member')  # 로그인
 api.add_namespace(Join, '/member')  # 회원가입
 api.add_namespace(IDCheck, '/member')		# 아이디 중복확인
+api.add_namespace(CPCheck, '/member')       # 회사 중복확인
 api.add_namespace(GetProfile, '/member')    # 프로필 조회
 api.add_namespace(SetProfile, '/member')	# 프로필 등록
 api.add_namespace(SetInterest, '/member')	# 관심분야 등록

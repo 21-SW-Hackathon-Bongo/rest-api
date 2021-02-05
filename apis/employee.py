@@ -9,7 +9,7 @@ sys.path.append("..")
 
 from lib.db_help import dbHelper
 
-SetEmployeeEnd = Namespace('set employee end', description='일자리 평점 등록')
+SetEmployeeEnd = Namespace('set employee end', description='단기 알바 종료 후 업체 평가')
 
 # 평점 모델
 employee_end_model = SetEmployeeEnd.model('employee score data', {
@@ -19,7 +19,6 @@ employee_end_model = SetEmployeeEnd.model('employee score data', {
     'score_content': fields.String,
     'score_value': fields.Integer,
     'score_type': fields.String,
-    'badge_nm': fields.String,
 })
 
 
@@ -27,21 +26,21 @@ employee_end_model = SetEmployeeEnd.model('employee score data', {
 @SetEmployeeEnd.route('/<work_seq>/employee/end')
 @SetEmployeeEnd.response(200, 'OK')
 @SetEmployeeEnd.response(500, 'Internal Error')
-# @SetEmployeeEnd.doc(params={'Authorization': {'in': 'header', 'description': 'An authorization token'}})
+@SetEmployeeEnd.doc(params={'Authorization': {'in': 'header', 'description': 'An authorization token'}})
 class Get_Employee(Resource):
     @SetEmployeeEnd.expect(employee_end_model)
     def post(self, work_seq):
         try:
             db = dbHelper()
 
-            # header = request.headers.get('Authorization')
-            #
-            # if header is None:
-            #     return {"code": "err", "message": "Not Allow Authorization"}
-            # try:
-            #     data = jwt.decode(header, "secret", algorithms=["HS256"])
-            # except Exception as e:
-            #     return {"code": "err", "message": "Token Expired"}
+            header = request.headers.get('Authorization')
+
+            if header is None:
+                return {"code": "err", "message": "Not Allow Authorization"}
+            try:
+                data = jwt.decode(header, "secret", algorithms=["HS256"])
+            except Exception as e:
+                return {"code": "err", "message": "Token Expired"}
 
             parser = reqparse.RequestParser()
             parser.add_argument('user_seq', type=int)
@@ -50,14 +49,13 @@ class Get_Employee(Resource):
             parser.add_argument('score_content', type=str)
             parser.add_argument('score_value', type=int)
             parser.add_argument('score_type', type=str)
-            parser.add_argument('badge_nm', type=str)  # 추후 정규화를 생각해봐야 함..
+            # parser.add_argument('badge_nm', type=str)  # 추후 정규화를 생각해봐야 함..
             args = parser.parse_args()
 
-            sql = "INSERT INTO score (volunteer_seq, work_seq, score_title, score_content, score_value, score_type, badge_nm) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            sql = "INSERT INTO score (volunteer_seq, work_seq, score_title, score_content, score_value, score_type) VALUES (%s, %s, %s, %s, %s, %s)"
 
             db.cursor.execute(sql, (
-                args['volunteer_seq'], work_seq, args['score_title'], args['score_content'], args['score_value'],
-                args['score_type'], args['badge_nm']))
+                args['volunteer_seq'], work_seq, args['score_title'], args['score_content'], args['score_value'], args['score_type']))
 
             sql = "SELECT sum(a.score_value) / count(c.user_seq) AS score_sum FROM score a, volunteer b, user c WHERE a.volunteer_seq = b.volunteer_seq " \
                   "AND b.user_seq = c.user_seq AND b.user_seq = %s"
@@ -76,7 +74,7 @@ class Get_Employee(Resource):
         return {"code": "success"}
 
 
-PutEmployeeEnd = Namespace('put employee end', description='일자리 평점 수정')
+PutEmployeeEnd = Namespace('put employee end', description='단기 알바 업체 평가 수정')
 # 평점 수정 모델
 put_employee_end_model = SetEmployeeEnd.model('put employee score data', {
     'user_seq': fields.Integer,
@@ -84,7 +82,6 @@ put_employee_end_model = SetEmployeeEnd.model('put employee score data', {
     'score_content': fields.String,
     'score_value': fields.Integer,
     'score_type': fields.String,
-    'badge_nm': fields.String,
 })
 
 # 일자리 지원자 승인 API
@@ -115,13 +112,13 @@ class Put_Employee(Resource):
             parser.add_argument('score_content', type=str)
             parser.add_argument('score_value', type=int)
             parser.add_argument('score_type', type=str)
-            parser.add_argument('badge_nm', type=str)  # 추후 정규화를 생각해봐야 함..
+            # parser.add_argument('badge_nm', type=str)  # 추후 정규화를 생각해봐야 함..
 
             args = parser.parse_args()
 
-            sql = "UPDATE score SET score_title = %s, score_content = %s, score_value = %s, score_type = %s, badge_nm = %s WHERE volunteer_seq = %s AND work_seq = %s";
+            sql = "UPDATE score SET score_title = %s, score_content = %s, score_value = %s, score_type = %s WHERE volunteer_seq = %s AND work_seq = %s";
 
-            db.cursor.execute(sql, (args['score_title'], args['score_content'], args['score_value'], args['score_type'], args['badge_nm'], volunteer_seq, work_seq))
+            db.cursor.execute(sql, (args['score_title'], args['score_content'], args['score_value'], args['score_type'], volunteer_seq, work_seq))
 
             sql = "SELECT sum(a.score_value) / count(c.user_seq) AS score_sum FROM score a, volunteer b, user c WHERE a.volunteer_seq = b.volunteer_seq " \
                   "AND b.user_seq = c.user_seq AND b.user_seq = %s"
