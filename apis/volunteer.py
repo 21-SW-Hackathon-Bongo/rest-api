@@ -27,38 +27,34 @@ class Get_Volunteer(Resource):
         try:
             db = dbHelper()
 
-            parser = reqparse.RequestParser()
-            parser.add_argument('token', type=str)
-            args = parser.parse_args()
+            header = request.headers.get('Authorization')
 
+            if header is None:
+                return {"code": "err", "message": "Not Allow Authorization"}
             try:
-                data = jwt.decode(args['token'], "secret", algorithms=["HS256"])
-            except:
+                data = jwt.decode(header, "secret", algorithms=["HS256"])
+            except Exception as e:
                 return {"code": "err", "message": "Token Expired"}
 
-            sql = "SELECT * from volunteer a, user b WHERE a.user_seq = b.user_seq AND work_seq = %s;"
+            sql = "SELECT a.volunteer_seq, a.user_seq, b.user_nm, b.user_gender, a.volunteer_content FROM volunteer a, user b WHERE a.user_seq = b.user_seq AND work_seq = %s;"
 
             db.cursor.execute(sql, work_seq)
-            result = db.cursor.fetchmany()
-
+            result = db.cursor.fetchall()
+            print(result)
             if result is None:
                 return {"code": "err", "message": "Invalid Volunteer"}
-
-            volunteer_data = {"company_nm": result['company_nm'], "company_intro": result['company_intro'],
-                              "company_img": result['company_img'], "ower_nm": result['owner_nm']
-                              }
 
         except Exception as e:
             return {"code": "err", "message": str(e)}
 
-        return {"code": "success", "data": volunteer_data}
+        return {"code": "success", "data": result}
 
 
 SetVolunteer = Namespace('set volunteer', description='일자리 지원자 승인')
 
 # 토큰
-default_model = SetVolunteer.model('data', {
-    'token': fields.String,
+setVolunteer_model = SetVolunteer.model('apply volunteer data', {
+    'volunteer_seq': fields.Integer,
 })
 
 
@@ -68,24 +64,29 @@ default_model = SetVolunteer.model('data', {
 @SetVolunteer.response(500, 'Internal Error')
 @SetVolunteer.doc(params={'Authorization': {'in': 'header', 'description': 'An authorization token'}})
 class Set_Volunteer(Resource):
+    @SetVolunteer.expect(setVolunteer_model)
     def put(self):
         try:
             db = dbHelper()
+
+            header = request.headers.get('Authorization')
+
+            if header is None:
+                return {"code": "err", "message": "Not Allow Authorization"}
+            try:
+                data = jwt.decode(header, "secret", algorithms=["HS256"])
+            except Exception as e:
+                return {"code": "err", "message": "Token Expired"}
 
             parser = reqparse.RequestParser()
             parser.add_argument('volunteer_seq', type=int)
             parser.add_argument('token', type=str)
             args = parser.parse_args()
 
-            try:
-                data = jwt.decode(args['token'], "secret", algorithms=["HS256"])
-            except:
-                return {"code": "err", "message": "Token Expired"}
-
             sql = "UPDATE volunteer SET employee_yn = %s where volunteer_seq = %s;"
 
             db.cursor.execute(sql, ('Y', args['volunteer_seq']))
-            db.cursor.commit()
+            db.conn.commit()
 
         except Exception as e:
             return {"code": "err", "message": str(e)}
