@@ -84,19 +84,19 @@ class Apply_Work(Resource):
             parser.add_argument('volunteer_content', type=str)
             args = parser.parse_args()
 
-            sql = "SELECT * FROM volunteer where user_seq = %s AND work_seq = %s AND volunteer_yn = %s"
-            db.cursor.execute(sql, (args['user_seq'], args['work_seq'], 'Y'))
-            result = db.cursor.fetchall()
-
-            if result is None:
-                return {"code": "err", "message": "Already have an apply"}
+            # sql = "SELECT * FROM volunteer where user_seq = %s AND work_seq = %s AND volunteer_yn = %s"
+            # db.cursor.execute(sql, (args['user_seq'], args['work_seq'], 'Y'))
+            # result = db.cursor.fetchall()
+            #
+            # if result is not None:
+            #     return {"code": "err", "message": "Already have an apply"}
 
             sql = "INSERT into volunteer(user_seq, work_seq, volunteer_content, volunteer_yn) VALUES (%s, %s, %s, %s)"
             db.cursor.execute(sql, (args['user_seq'], args['work_seq'], args['volunteer_content'], 'Y'))
 
             # sql = "UPDATE work SET work_recruit = work_recruit - 1 WHERE work_seq = %s"
             # db.cursor.execute(sql, args['work_seq'])
-            # db.conn.commit()
+            db.conn.commit()
 
         except Exception as e:
             return {"code": "err", "message": str(e)}
@@ -138,12 +138,12 @@ class Cancel_Work(Resource):
             parser.add_argument('user_seq', type=int)
             args = parser.parse_args()
 
-            sql = "UPDATE volunteer SET volunteer_yn = %s WHERE work_seq = %s AND user_seq = %s AND volunteer_yn = 'Y'"
-            db.cursor.execute(sql, ('N', work_seq, args['user_seq']))
+            sql = "UPDATE volunteer SET volunteer_yn = %s isDeleted = %s WHERE work_seq = %s AND user_seq = %s AND volunteer_yn = 'Y'"
+            db.cursor.execute(sql, ('N', work_seq, args['user_seq'], 'Y'))
 
             # sql = "UPDATE work SET work_recruit = work_recruit + 1 WHERE work_seq = %s"
             # db.cursor.execute(sql, work_seq)
-            # db.conn.commit()
+            db.conn.commit()
 
         except Exception as e:
             return {"code": "err", "message": str(e)}

@@ -5,8 +5,8 @@ from flask_restplus import Resource, Api
 from apis.calculate import Calculate
 from apis.company import GetCPProfile
 from apis.deposit import Deposit
-from apis.employee import SetEmployeeEnd, PutEmployeeEnd
-from apis.member import CPCheck, SetInterest, SetProfile, GetProfile, IDCheck, Join, Login
+from apis.employee import SetEmployeeEnd, PutEmployeeEnd, SetCompanyEnd
+from apis.member import SetInterest, SetProfile, GetProfile, IDCheck, Join, Login
 from apis.search import Search, Category
 from apis.item import Work, Apply, Cancel
 from apis.volunteer import GetVolunteer, SetVolunteer
@@ -21,11 +21,9 @@ app.register_blueprint(blueprint)
 api.add_namespace(Login, '/member')  # 로그인
 api.add_namespace(Join, '/member')  # 회원가입
 api.add_namespace(IDCheck, '/member')		# 아이디 중복확인
-api.add_namespace(CPCheck, '/member')       # 회사 중복확인
 api.add_namespace(GetProfile, '/member')    # 프로필 조회
 api.add_namespace(SetProfile, '/member')	# 프로필 등록
 api.add_namespace(SetInterest, '/member')	# 관심분야 등록
-
 
 api.add_namespace(Search, '/search')		# 전체 검색
 api.add_namespace(Category, '/search')		# 카테고리 검색
@@ -41,7 +39,8 @@ api.add_namespace(GetCPProfile, '/company')	# 회사 프로필 조회
 api.add_namespace(GetVolunteer, '/work')	# 지원자 조회
 api.add_namespace(SetVolunteer, '/work')	# 지원자 승인
 
-api.add_namespace(SetEmployeeEnd, '/work')	# 평점 등록
+api.add_namespace(SetEmployeeEnd, '/work')	# 평점 매장 등록
+api.add_namespace(SetCompanyEnd, '/work')	# 평점 사용자 등록
 api.add_namespace(PutEmployeeEnd, '/work')	# 평점 수정
 
 api.add_namespace(Deposit, '/deposit')	# 회사 프로필 조회

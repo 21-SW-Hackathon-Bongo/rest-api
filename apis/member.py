@@ -71,21 +71,6 @@ def setInterest(user_seq, work_type_seq):
     return True
 
 
-# 회사이름 중복 검증
-def checkCompanynm(company_nm):
-    db = dbHelper()
-    sql = "SELECT company_nm FROM company WHERE company_nm = %s";
-    db.cursor.execute(sql, company_nm)
-    result = db.cursor.fetchone()
-
-    if result == None:
-        # 중복 없음
-        return True
-
-    # 중복 존재
-    return False
-
-
 # 로그인 API
 # 로그인 파라미터 정보
 Login = Namespace('login', description='로그인')
@@ -182,7 +167,7 @@ class JoinProcess(Resource):
 
         encoded_jwt = jwt.encode({"user_seq": user_seq}, "secret", algorithm="HS256")
 
-        return {"code": "success", "data": "token"}
+        return {"code": "success", "data": {"token": encoded_jwt}}
 
 
 # 프로필 등록 API
@@ -354,35 +339,3 @@ class GetProfileProcess(Resource):
             return {"code": "err", "message": str(e)}
 
         return {"code": "success", "data": profile_data}
-
-
-# 프로필 조회 API
-CPCheck = Namespace('NM company_check', description='회사 중복검사')
-
-# 아이디 중복확인 API
-cp_check_model = CPCheck.model('company check_model', {
-    'company_nm': fields.String
-})
-
-
-@CPCheck.route('/company/check')
-class Company_check(Resource):
-    @CPCheck.expect(cp_check_model)
-    def post(self):
-        try:
-            parser = reqparse.RequestParser()
-            parser.add_argument('company_nm', type=str)
-            args = parser.parse_args()
-
-            companyNM = args['company_nm']
-
-            if checkCompanynm(companyNM):
-                # 중복 존재 X
-                return {"code": "success", "data": {"isDuplicate": "n"}, "message": "n"}
-            else:
-                # 중복 존재
-                return {"code": "success", "data": {"isDuplicate": "y"}, "message": "y"}
-        except Exception as e:
-            return {"code": "err", "message": str(e)}
-
-        return {"code": "success"}
