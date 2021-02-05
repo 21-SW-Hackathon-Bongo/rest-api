@@ -33,12 +33,19 @@ class Get_Profile(Resource):
             parser.add_argument('token', type=str)
             args = parser.parse_args()
 
+            # Authorization 헤더로 담음
+            header = request.headers.get('Authorization')
+
+            if header is None:
+                return {"code": "err", "message": "Not Allow Authorization"}
+
             try:
-                data = jwt.decode(args['token'], "secret", algorithms=["HS256"])
-            except:
+                data = jwt.decode(header, "secret", algorithms=["HS256"])
+
+            except Exception as e:
                 return {"code": "err", "message": "Token Expired"}
 
-            sql = "SELECT a.* b.user_nm AS owner_nm FROM company a, user b WHERE a.onwer_seq = b.user_seq AND company_seq = %s;"
+            sql = "SELECT a.*, b.user_nm AS owner_nm FROM company a, user b WHERE a.owner_seq = b.user_seq AND company_seq = %s;"
 
             db.cursor.execute(sql, company_seq)
             result = db.cursor.fetchone()
@@ -47,7 +54,7 @@ class Get_Profile(Resource):
                 return {"code": "err", "message": "Invalid User"}
 
             profile_data = {"company_nm": result['company_nm'], "company_intro": result['company_intro'],
-                            "company_img": result['company_img'], "ower_nm": result['owner_nm']
+                            "company_img": result['company_img'], "owner_nm": result['owner_nm']
                             }
 
         except Exception as e:
