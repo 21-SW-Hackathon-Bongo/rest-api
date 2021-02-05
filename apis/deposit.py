@@ -97,3 +97,48 @@ class DepositProcess(Resource):
 			return {"code":"err", "message":str(e)}
 
 		return {"code":"success", "data":{"deposit":deposit}}
+
+
+
+# 예치금 지출 API
+DepositExit = Namespace('DepositExit', description='예치금 지출')
+
+charge_exit_model = DepositExit.model('deposit exit charge', {
+		'amount': fields.Integer,
+		'work_seq': fields.Integer
+})
+
+
+@DepositExit.route('/')
+@DepositExit.response(200, 'Found')
+@DepositExit.response(500, 'Internal Error')
+@DepositExit.doc(params={'Authorization': {'in': 'header', 'description': 'An authorization token'}})
+class DepositExitProcess(Resource):
+	@DepositExit.expect(charge_exit_model)
+	def post(self):
+		try:
+			header = request.headers.get('Authorization')
+
+			if header is None:
+				return {"code": "err", "message": "Not Allow Authorization"}
+			try:
+				data = jwt.decode(header, "secret", algorithms=["HS256"])
+			except Exception as e:
+				return {"code": "err", "message": "Token Expired"}
+
+			user_seq = data['user_seq']
+
+			db = dbHelper()
+
+			parser = reqparse.RequestParser()
+			parser.add_argument('user_seq', type=int)
+			args = parser.parse_args()
+
+			sql = "UPDATE user SET user_deposit = user_deposiot - %s WHERE user_seq = %s";
+			db.cursor.execute(sql, (user_seq, args['amount']))
+			db.conn.commit()
+
+		except Exception as e:
+			return {"code": "err", "message": str(e)}
+
+		return {"code": "success"}

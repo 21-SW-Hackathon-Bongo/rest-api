@@ -2,9 +2,9 @@ from flask import Flask, Blueprint
 from flask_restplus import Resource, Api
 # API Import
 # from apis.calculate import Calculate
-from apis.calculate import Calculate
+from apis.calculate import Calculate, Calculate_price
 from apis.company import GetCPProfile
-from apis.deposit import Deposit
+from apis.deposit import Deposit, DepositExit
 from apis.employee import SetEmployeeEnd, PutEmployeeEnd, SetCompanyEnd
 from apis.member import SetInterest, SetProfile, GetProfile, IDCheck, Join, Login
 from apis.search import Search, Category
@@ -44,8 +44,10 @@ api.add_namespace(SetCompanyEnd, '/work')	# 평점 사용자 등록
 api.add_namespace(PutEmployeeEnd, '/work')	# 평점 수정
 
 api.add_namespace(Deposit, '/deposit')	# 회사 프로필 조회
+api.add_namespace(DepositExit, '/deposit')	# 회사 프로필 조회
 
 api.add_namespace(Calculate, '/calculate') # 정산
+api.add_namespace(Calculate_price, '/calculate') # 정산
 """
 api.add_namespace(Business, '/business')	# 고용주 회원 관련
 api.add_namespace(Job, '/job')				# 업무 관련
