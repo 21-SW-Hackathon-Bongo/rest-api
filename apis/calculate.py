@@ -12,11 +12,11 @@ sys.path.append("..")
 
 from lib.db_help import dbHelper
 
-
 Calculate = Namespace('calculate', description='일일 정산')
 calculate_model = Calculate.model('calculate data', {
     'user_seq': fields.Integer,
 })
+
 
 @Calculate.route('/')
 @Calculate.response(200, 'OK')
@@ -51,26 +51,34 @@ class Get_Calculate(Resource):
         return {"code": "success", "data": result}
 
 
+Calculate_price = Namespace('calculate price', description='일일 총 금액')
 
-# # 정산 완료 후 평가
-# Calculate_judge = Namespace('calculate judge', description='정산 완료 후 평가')
-#
-# # 검색 API
-# @Calculate_judge.route('/judge')
-# @Calculate_judge.response(200, 'OK')
-# @Calculate_judge.response(500, 'Internal Error')
-# class Calculate_judge(Resource):
-#     def post(self):
-#         try:
-#             db = dbHelper()
-#
-#             sql = "SELECT * FROM volunteer a WHERE "
-#
-#             db.cursor.execute(sql, )
-#             result = db.cursor.fetchall()
-#
-#
-#         except Exception as e:
-#             return {"code": "err", "message": str(e)}
-#
-#         return {"code": "success", "data": result}
+
+@Calculate_price.route('/price')
+@Calculate_price.response(200, 'OK')
+@Calculate_price.response(500, 'Internal Error')
+class Get_Calculate_Price(Resource):
+    @Calculate_price.expect(calculate_model)
+    def post(self):
+        try:
+            db = dbHelper()
+
+            parser = reqparse.RequestParser()
+            parser.add_argument('user_seq', type=int)
+            args = parser.parse_args()
+
+            sql = "SELECT sum(a.work_pay) AS total_price FROM bongo.work a, bongo.volunteer b WHERE b.user_seq = %s AND b.work_seq = a.work_seq AND b.volunteer_createAt BETWEEN DATE_ADD(NOW(),INTERVAL -1 DAY ) AND NOW()";
+
+            db.cursor.execute(sql, args['user_seq'])
+            result = db.cursor.fetchone()
+
+            result['total_price'] = str(result['total_price'])
+
+        except Exception as e:
+            return {"code": "err", "message": str(e)}
+
+        return {"code": "success", "data": result['total_price']}
+
+
+
+
