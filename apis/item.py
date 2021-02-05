@@ -39,7 +39,7 @@ class Single_Work(Resource):
 
 # 등록 파라미터 정보
 Apply = Namespace('apply', description='일차리 신청')
-apply_work_model = Apply.model('apply data', {
+apply_work_model = Apply.model('apply work data', {
     'token': fields.String,
     'user_seq': fields.Integer,
     'work_seq': fields.Integer,
@@ -58,17 +58,23 @@ class Apply_Work(Resource):
         try:
             db = dbHelper()
 
+            # Authorization 헤더로 담음
+            header = request.headers.get('Authorization')
+
+            if header is None:
+                return {"code": "err", "message": "Not Allow Authorization"}
+
+            try:
+                data = jwt.decode(header, "secret", algorithms=["HS256"])
+            except Exception as e:
+                return {"code": "err", "message": "Token Expired"}
+
+
             parser = reqparse.RequestParser()
-            parser.add_argument('token', type=str)
             parser.add_argument('user_seq', type=int)
             parser.add_argument('work_seq', type=int)
             parser.add_argument('volunteer_content', type=str)
             args = parser.parse_args()
-
-            try:
-                data = jwt.decode(args['token'], "secret", algorithms=["HS256"])
-            except:
-                return {"code": "err", "message": "Token Expired"}
 
             sql = "INSERT into volunteer(user_seq, work_seq, volunteer_content) VALUES (%s, %s, %s)"
             db.cursor.execute(sql, (args['user_seq'], args['work_seq'], args['volunteer_content']))
@@ -83,6 +89,10 @@ class Apply_Work(Resource):
 # 취소 파라미터 정보
 Cancel = Namespace('cancel', description='일자리 신청 취소')
 
+cancle_work_model = Apply.model('cancle work data', {
+    'user_seq': fields.Integer,
+})
+
 
 # 아이템 취소 API
 @Cancel.route('/cancel/<work_seq>')
@@ -90,22 +100,28 @@ Cancel = Namespace('cancel', description='일자리 신청 취소')
 @Cancel.response(500, 'Internal Error')
 @Cancel.doc(params={'Authorization': {'in': 'header', 'description': 'An authorization token'}})
 class Cancel_Work(Resource):
-
+    @Apply.expect(cancle_work_model)
     def put(self, work_seq):
         try:
             db = dbHelper()
 
-            parser = reqparse.RequestParser()
-            parser.add_argument('token', type=str)
-            args = parser.parse_args()
+            # Authorization 헤더로 담음
+            header = request.headers.get('Authorization')
+
+            if header is None:
+                return {"code": "err", "message": "Not Allow Authorization"}
 
             try:
-                data = jwt.decode(args['token'], "secret", algorithms=["HS256"])
-            except:
+                data = jwt.decode(header, "secret", algorithms=["HS256"])
+            except Exception as e:
                 return {"code": "err", "message": "Token Expired"}
 
-            sql = "UPDATE volunteer SET volunteer_yn = '%s' WHERE work_seq = '%s'"
-            db.cursor.execute(sql, ('n', work_seq))
+            parser = reqparse.RequestParser()
+            parser.add_argument('user_seq', type=int)
+            args = parser.parse_args()
+
+            sql = "UPDATE volunteer SET volunteer_yn = %s WHERE work_seq = %s AND user_seq = %s"
+            db.cursor.execute(sql, ('N', work_seq, args['user_seq']))
             db.conn.commit()
 
         except Exception as e:
